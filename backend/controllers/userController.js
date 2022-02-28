@@ -3,6 +3,13 @@ const bcrypt = require("bcryptjs");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModels");
 
+//Generate JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
+};
+
 //  @desc Register new user
 //  @route POST /api/users
 //  @access PUBLIC
@@ -34,6 +41,7 @@ const registerUser = asyncHandler(async (req, res) => {
       _id: user.id,
       name: user.name,
       email: user.email,
+      token: generateToken(user._id),
     });
   } else {
     res.status(400);
@@ -44,6 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
 // @desc Login a user
 // @route POST /api/users/login
 // @access PUBLIC
+
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -54,6 +63,7 @@ const loginUser = asyncHandler(async (req, res) => {
       _id: user.id,
       name: user.name,
       email: user.email,
+      token: generateToken(user._id),
     });
   } else {
     res.status(400);
@@ -66,8 +76,16 @@ const loginUser = asyncHandler(async (req, res) => {
 // @access PUBLIC
 
 const getUser = asyncHandler(async (req, res) => {
-  res.json({ message: "Get user data" });
+  const { _id, name, email } = await User.findById(req.user.id);
+
+  res.status(200).json({
+    id: _id,
+    name,
+    email,
+  });
 });
+
+// Generate JWT
 
 module.exports = {
   registerUser,
